@@ -7,10 +7,9 @@ import (
 )
 
 func main() {
-	var eng string
+	var conEng string
+	conEng = engine.Connect()
+	fmt.Println(conEng)
 
 	fmt.Println("robot")
-
-	eng = engine.Engine("robot")
-	fmt.Println(eng)
 }
