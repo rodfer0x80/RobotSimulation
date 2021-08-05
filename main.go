@@ -10,7 +10,7 @@ import (
 
 // World
 // When side equals a, board is a 2D a*a square
-const worldLateral = 25
+const worldLateral = 30
 const worldSize = worldLateral * worldLateral
 
 // Graphics
@@ -35,39 +35,45 @@ type Robot struct {
 	maxMoveSpeed int
 	moveAcc      int // decimal 2f number x,ab acceleration 100 = 1,00
 
-	facing    string // N S E W
-	moving    bool   // moving or stopping
-	turnLeft  bool
-	turnRight bool
+	facing  string // N S E W
+	moving  bool   // moving or stopping
+	turning bool
 
 	//func init()
 
 }
 
-func (robot Robot) move(mark int) int {
+func abs(n int) int {
+	if n < 0 {
+		return -n
+	} else {
+		return n
+	}
+}
+
+func (robot Robot) move(mark int) (int, int, bool) {
 	var horizontalMove int
 	var verticalMove int
 
-	horizontalMove, verticalMove, robot.moving = robot.intel(mark)
+	horizontalMove, verticalMove, robot.moveSpeed, robot.turning = robot.intel(mark)
 
-	if robot.turnLeft {
-		// nothing
-	}
-
-	if robot.turnRight {
-		// nothing
+	if robot.moveSpeed > 0 {
+		robot.moving = true
+	} else {
+		robot.moving = false
+		robot.turning = true
 	}
 
 	if robot.moving {
 		if horizontalMove > 0 {
-			robot.mainPos += 1
+			robot.mainPos += robot.moveSpeed
 		} else if horizontalMove < 0 {
-			robot.mainPos -= 1
+			robot.mainPos -= robot.moveSpeed
 		} else {
 			if verticalMove > 0 {
-				robot.mainPos += worldLateral
+				robot.mainPos += robot.moveSpeed * worldLateral
 			} else if verticalMove < 0 {
-				robot.mainPos -= worldLateral
+				robot.mainPos -= robot.moveSpeed * worldLateral
 			} else {
 				robot.moving = false
 			}
@@ -86,7 +92,7 @@ func (robot Robot) move(mark int) int {
 		//}
 	}
 
-	return robot.mainPos
+	return robot.mainPos, robot.moveSpeed, robot.moving
 }
 
 func initSapien() Robot {
@@ -101,10 +107,18 @@ func initSapien() Robot {
 	sapien.maxMoveSpeed = 5
 	sapien.moveAcc = 1
 	sapien.moving = false
-	sapien.turnLeft = false
-	sapien.turnRight = false
+	sapien.turning = false
 
 	return sapien
+}
+
+func (robot Robot) haltingTime(n int) int {
+	var totalTime int
+	for i := 1; i <= n; i++ {
+		totalTime += i
+	}
+
+	return totalTime
 }
 
 func (robot Robot) connect() string {
@@ -112,7 +126,11 @@ func (robot Robot) connect() string {
 	return connected
 }
 
-func (robot Robot) intel(mark int) (int, int, bool) {
+func (robot Robot) intel(mark int) (int, int, int, bool) {
+	if !(robot.moving) {
+		robot.turning = true
+	}
+
 	var markRow int = mark / worldLateral
 	var robotRow int = robot.mainPos / worldLateral
 
@@ -122,10 +140,30 @@ func (robot Robot) intel(mark int) (int, int, bool) {
 	var verticalMove int = markRow - robotRow
 	var horizontalMove int = markColumn - robotColumn
 
-	if horizontalMove != 0 || verticalMove != 0 {
-		robot.moving = true
+	if abs(horizontalMove) > 0 {
+		if abs(horizontalMove) >= robot.haltingTime(robot.moveSpeed+robot.moveAcc) {
+			robot.moveSpeed += robot.moveAcc
+		} else if abs(horizontalMove) >= robot.haltingTime(robot.moveSpeed) {
+			robot.moveSpeed = robot.moveSpeed
+		} else {
+			robot.moveSpeed -= robot.moveAcc
+		}
+	} else {
+		if robot.turning {
+			robot.turning = false
+			robot.moveSpeed -= 1
+		}
+
+		if abs(verticalMove) >= robot.haltingTime(robot.moveSpeed+robot.moveAcc) {
+			robot.moveSpeed += robot.moveAcc
+		} else if abs(verticalMove) >= robot.haltingTime(robot.moveSpeed) {
+			robot.moveSpeed = robot.moveSpeed
+		} else {
+			robot.moveSpeed -= robot.moveAcc
+		}
 	}
-	return horizontalMove, verticalMove, robot.moving
+
+	return horizontalMove, verticalMove, robot.moveSpeed, robot.turning
 }
 
 func placeMark() int {
@@ -214,7 +252,7 @@ func main() {
 		time.Sleep(1 * time.Second)
 		clearScreen()
 
-		sapien.mainPos = sapien.move(mark)
+		sapien.mainPos, sapien.moveSpeed, sapien.moving = sapien.move(mark)
 		world = drawWorld(world, mark, sapien)
 		fmt.Println(getWorld(world))
 	}
