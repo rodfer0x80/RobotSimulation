@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
+	"time"
 
 	"github.com/trevalkov/motorRobot/engine"
 )
@@ -14,8 +16,8 @@ const worldSize = worldSide * worldSide
 // Graphics
 const worldCell = "."
 const robotCell = "*"
-const pointCell = "x"
-const pointRobotOverlapCell = "o"
+const markCell = "x"
+const robotMarkOverlapCell = "o"
 
 // Robot
 type Robot struct {
@@ -40,12 +42,12 @@ type Robot struct {
 
 }
 
-func (robot Robot) move(mainPos int, moveSpeed int, moveAcc int, moving bool, turnLeft bool, turnRight bool) int {
-	if turnLeft {
+func (robot Robot) move() int {
+	if robot.turnLeft {
 		// nothing
 	}
 
-	if turnRight {
+	if robot.turnRight {
 		// nothing
 	}
 
@@ -90,19 +92,41 @@ func (robot Robot) connect() string {
 	return connected
 }
 
-// InitWorld starts board state
-func initWorld(world *[worldSize]string) *[worldSize]string {
-	for i := 0; i < worldSize; i++ {
-		world[i] = worldCell
-	}
-	return world
+func (robot Robot) intel(mark int) {
+}
+
+func placeMark() int {
+	rand.Seed(time.Now().UnixNano())
+	var randomNumber int = rand.Intn(worldSize)
+
+	return randomNumber
+}
+
+func clearScreen() int {
+	fmt.Println("\033[2J")
+	return 0
 }
 
 // InitWorld starts board state
-func drawWorld(world *[worldSize]string, robot Robot) *[worldSize]string {
+func initWorld(world *[worldSize]string) (*[worldSize]string, int) {
+	for i := 0; i < worldSize; i++ {
+		world[i] = worldCell
+	}
+
+	var mark int = placeMark()
+
+	world[mark] = markCell
+
+	return world, mark
+}
+
+// InitWorld starts board state
+func drawWorld(world *[worldSize]string, mark int, robot Robot) *[worldSize]string {
 	for i := 0; i < worldSize; i++ {
 		if i == robot.mainPos {
 			world[i] = robotCell
+		} else if i == mark {
+			world[i] = markCell
 		} else {
 			world[i] = worldCell
 		}
@@ -142,12 +166,20 @@ func main() {
 	fmt.Println(connectEngine)
 
 	world := new([worldSize]string)
-	world = initWorld(world)
+	var mark int
+	world, mark = initWorld(world)
 
 	var sapien = initSapien()
 	var connectSapien string = sapien.connect()
 	fmt.Println(connectSapien)
 
-	world = drawWorld(world, sapien)
-	fmt.Println(getWorld(world))
+	time.Sleep(1 * time.Second)
+
+	for 1 > 0 {
+		time.Sleep(1 * time.Second)
+		clearScreen()
+
+		world = drawWorld(world, mark, sapien)
+		fmt.Println(getWorld(world))
+	}
 }
