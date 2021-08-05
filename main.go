@@ -10,8 +10,8 @@ import (
 
 // World
 // When side equals a, board is a 2D a*a square
-const worldSide = 25
-const worldSize = worldSide * worldSide
+const worldLateral = 25
+const worldSize = worldLateral * worldLateral
 
 // Graphics
 const worldCell = "."
@@ -33,16 +33,23 @@ type Robot struct {
 
 	moveSpeed    int // decimal 2f number x,ab so speed 100 = 1,00
 	maxMoveSpeed int
-	moveAcc      int  // decimal 2f number x,ab acceleration 100 = 1,00
-	moving       bool // moving or stopping
-	turnLeft     bool
-	turnRight    bool
+	moveAcc      int // decimal 2f number x,ab acceleration 100 = 1,00
+
+	facing    string // N S E W
+	moving    bool   // moving or stopping
+	turnLeft  bool
+	turnRight bool
 
 	//func init()
 
 }
 
-func (robot Robot) move() int {
+func (robot Robot) move(mark int) int {
+	var horizontalMove int
+	var verticalMove int
+
+	horizontalMove, verticalMove, robot.moving = robot.intel(mark)
+
 	if robot.turnLeft {
 		// nothing
 	}
@@ -52,18 +59,31 @@ func (robot Robot) move() int {
 	}
 
 	if robot.moving {
+		if horizontalMove > 0 {
+			robot.mainPos += 1
+		} else if horizontalMove < 0 {
+			robot.mainPos -= 1
+		} else {
+			if verticalMove > 0 {
+				robot.mainPos += worldLateral
+			} else if verticalMove < 0 {
+				robot.mainPos -= worldLateral
+			} else {
+				robot.moving = false
+			}
+		}
 		//robot.mainPos = oneDimensionalMove(robot.mainPos, robot.moveSpeed)
 
-		if robot.moveSpeed < robot.maxMoveSpeed {
-			robot.moveSpeed += robot.moveAcc
-		}
+		//if robot.moveSpeed < robot.maxMoveSpeed {
+		//	robot.moveSpeed += robot.moveAcc
+		//}
 
 	} else {
 		//robot.mainPos = oneDimensionalMove(robot.mainPos, robot.moveSpeed)
 
-		if robot.moveSpeed > 0 {
-			robot.moveSpeed -= robot.moveAcc
-		}
+		//if robot.moveSpeed > 0 {
+		//	robot.moveSpeed -= robot.moveAcc
+		//}
 	}
 
 	return robot.mainPos
@@ -92,7 +112,20 @@ func (robot Robot) connect() string {
 	return connected
 }
 
-func (robot Robot) intel(mark int) {
+func (robot Robot) intel(mark int) (int, int, bool) {
+	var markRow int = mark / worldLateral
+	var robotRow int = robot.mainPos / worldLateral
+
+	var markColumn int = mark - (worldLateral * markRow)
+	var robotColumn int = robot.mainPos - (worldLateral * robotRow)
+
+	var verticalMove int = markRow - robotRow
+	var horizontalMove int = markColumn - robotColumn
+
+	if horizontalMove != 0 || verticalMove != 0 {
+		robot.moving = true
+	}
+	return horizontalMove, verticalMove, robot.moving
 }
 
 func placeMark() int {
@@ -123,7 +156,9 @@ func initWorld(world *[worldSize]string) (*[worldSize]string, int) {
 // InitWorld starts board state
 func drawWorld(world *[worldSize]string, mark int, robot Robot) *[worldSize]string {
 	for i := 0; i < worldSize; i++ {
-		if i == robot.mainPos {
+		if i == mark && i == robot.mainPos {
+			world[i] = robotMarkOverlapCell
+		} else if i == robot.mainPos {
 			world[i] = robotCell
 		} else if i == mark {
 			world[i] = markCell
@@ -150,10 +185,10 @@ func getWorld(world *[worldSize]string) string {
 	var worldString string = ""
 
 	// clearScreen()
-	for i := 0; i < worldSize; i += worldSide {
+	for i := 0; i < worldSize; i += worldLateral {
 		worldString += "\n"
 
-		for ii := 0; ii < worldSide; ii++ {
+		for ii := 0; ii < worldLateral; ii++ {
 			worldString += world[i+ii] + " "
 		}
 	}
@@ -179,6 +214,7 @@ func main() {
 		time.Sleep(1 * time.Second)
 		clearScreen()
 
+		sapien.mainPos = sapien.move(mark)
 		world = drawWorld(world, mark, sapien)
 		fmt.Println(getWorld(world))
 	}
