@@ -6,20 +6,16 @@ import (
 	"github.com/trevalkov/motorRobot/engine"
 )
 
-// Board
-// If side is a, board is a 2D a*a square
+// World
+// When side equals a, board is a 2D a*a square
 const worldSide = 25
 const worldSize = worldSide * worldSide
 
 // Graphics
-const robotCell = "*"
 const worldCell = "."
+const robotCell = "*"
 const pointCell = "x"
 const pointRobotOverlapCell = "o"
-
-// Trail Graphics (dev)
-//const trailCell = // "x"
-//const trailRobotOverlapCell = //"*"
 
 // Robot
 type Robot struct {
@@ -77,7 +73,7 @@ func initSapien() Robot {
 	sapien.name = "Sapien"
 
 	sapien.totalCells = 11
-	sapien.mainPos = 30
+	sapien.mainPos = 105
 
 	sapien.moveSpeed = 0
 	sapien.maxMoveSpeed = 5
@@ -96,9 +92,20 @@ func (robot Robot) connect() string {
 
 // InitWorld starts board state
 func initWorld(world *[worldSize]string) *[worldSize]string {
-
 	for i := 0; i < worldSize; i++ {
 		world[i] = worldCell
+	}
+	return world
+}
+
+// InitWorld starts board state
+func drawWorld(world *[worldSize]string, robot Robot) *[worldSize]string {
+	for i := 0; i < worldSize; i++ {
+		if i == robot.mainPos {
+			world[i] = robotCell
+		} else {
+			world[i] = worldCell
+		}
 	}
 	return world
 }
@@ -115,7 +122,7 @@ func outOfWorldRight(column int, rowCells int) bool {
 	return flag
 }
 
-func drawWorld(world *[worldSize]string) string {
+func getWorld(world *[worldSize]string) string {
 	var worldString string = ""
 
 	// clearScreen()
@@ -131,14 +138,16 @@ func drawWorld(world *[worldSize]string) string {
 }
 
 func main() {
-	world := new([worldSize]string)
-	world = initWorld(world)
 	var connectEngine string = engine.Connect()
 	fmt.Println(connectEngine)
+
+	world := new([worldSize]string)
+	world = initWorld(world)
 
 	var sapien = initSapien()
 	var connectSapien string = sapien.connect()
 	fmt.Println(connectSapien)
 
-	fmt.Println(drawWorld(world))
+	world = drawWorld(world, sapien)
+	fmt.Println(getWorld(world))
 }
