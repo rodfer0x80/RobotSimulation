@@ -21,25 +21,16 @@ const robotMarkOverlapCell = "o"
 
 // Robot
 type Robot struct {
-	// Robot looks like this
-	//    xxx
-	//   xxoxx
-	//	  xxx
-
 	name string
 
-	totalCells int // 11
-	mainPos    int // representes the central cell of the robot as the hitbox "o"
+	mainPos int // representes the central cell of the robot as the hitbox "o"
 
 	moveSpeed    int // decimal 2f number x,ab so speed 100 = 1,00
 	maxMoveSpeed int
 	moveAcc      int // decimal 2f number x,ab acceleration 100 = 1,00
 
-	facing  string // N S E W
-	moving  bool   // moving or stopping
-	turning bool
-
-	//func init()
+	moving  bool // moving or stopping
+	turning bool // ready to turn direction
 
 }
 
@@ -51,7 +42,7 @@ func abs(n int) int {
 	}
 }
 
-func (robot Robot) move(mark int) (int, int, bool) {
+func (robot Robot) move(mark int) (int, int, bool, bool) {
 	var horizontalMove int
 	var verticalMove int
 
@@ -78,21 +69,11 @@ func (robot Robot) move(mark int) (int, int, bool) {
 				robot.moving = false
 			}
 		}
-		//robot.mainPos = oneDimensionalMove(robot.mainPos, robot.moveSpeed)
-
-		//if robot.moveSpeed < robot.maxMoveSpeed {
-		//	robot.moveSpeed += robot.moveAcc
-		//}
-
 	} else {
-		//robot.mainPos = oneDimensionalMove(robot.mainPos, robot.moveSpeed)
-
-		//if robot.moveSpeed > 0 {
-		//	robot.moveSpeed -= robot.moveAcc
-		//}
+		// stopped
 	}
 
-	return robot.mainPos, robot.moveSpeed, robot.moving
+	return robot.mainPos, robot.moveSpeed, robot.moving, robot.turning
 }
 
 func initSapien() Robot {
@@ -100,14 +81,14 @@ func initSapien() Robot {
 
 	sapien.name = "Sapien"
 
-	sapien.totalCells = 11
-	sapien.mainPos = 105
+	sapien.mainPos = worldSize/2 + worldLateral/2
 
 	sapien.moveSpeed = 0
 	sapien.maxMoveSpeed = 5
 	sapien.moveAcc = 1
+
 	sapien.moving = false
-	sapien.turning = false
+	sapien.turning = true
 
 	return sapien
 }
@@ -127,10 +108,6 @@ func (robot Robot) connect() string {
 }
 
 func (robot Robot) intel(mark int) (int, int, int, bool) {
-	if !(robot.moving) {
-		robot.turning = true
-	}
-
 	var markRow int = mark / worldLateral
 	var robotRow int = robot.mainPos / worldLateral
 
@@ -151,13 +128,13 @@ func (robot Robot) intel(mark int) (int, int, int, bool) {
 	} else {
 		if robot.turning {
 			robot.turning = false
-			robot.moveSpeed -= 1
+			robot.moveSpeed -= robot.moveAcc
 		}
 
 		if abs(verticalMove) >= robot.haltingTime(robot.moveSpeed+robot.moveAcc) {
 			robot.moveSpeed += robot.moveAcc
 		} else if abs(verticalMove) >= robot.haltingTime(robot.moveSpeed) {
-			robot.moveSpeed = robot.moveSpeed
+			// robot.moveSpeed = robot.moveSpeed
 		} else {
 			robot.moveSpeed -= robot.moveAcc
 		}
@@ -167,6 +144,7 @@ func (robot Robot) intel(mark int) (int, int, int, bool) {
 }
 
 func placeMark() int {
+	// place mark further from the borders so we can add robot hitbox next
 	rand.Seed(time.Now().UnixNano())
 	var randomNumber int = rand.Intn(worldSize)
 
@@ -179,16 +157,12 @@ func clearScreen() int {
 }
 
 // InitWorld starts board state
-func initWorld(world *[worldSize]string) (*[worldSize]string, int) {
+func initWorld(world *[worldSize]string) *[worldSize]string {
 	for i := 0; i < worldSize; i++ {
 		world[i] = worldCell
 	}
 
-	var mark int = placeMark()
-
-	world[mark] = markCell
-
-	return world, mark
+	return world
 }
 
 // InitWorld starts board state
@@ -206,8 +180,6 @@ func drawWorld(world *[worldSize]string, mark int, robot Robot) *[worldSize]stri
 	}
 	return world
 }
-
-//func tick(board [boardSize] string) [boardSize] string
 
 func outOfWorldRight(column int, rowCells int) bool {
 	var flag bool = false
@@ -234,26 +206,36 @@ func getWorld(world *[worldSize]string) string {
 	return worldString
 }
 
-func main() {
-	var connectEngine string = engine.Connect()
-	fmt.Println(connectEngine)
-
-	world := new([worldSize]string)
-	var mark int
-	world, mark = initWorld(world)
-
-	var sapien = initSapien()
-	var connectSapien string = sapien.connect()
-	fmt.Println(connectSapien)
-
-	time.Sleep(1 * time.Second)
+func tick(robot Robot, world *[worldSize]string) {
+	var mark int = placeMark()
 
 	for 1 > 0 {
 		time.Sleep(1 * time.Second)
 		clearScreen()
 
-		sapien.mainPos, sapien.moveSpeed, sapien.moving = sapien.move(mark)
-		world = drawWorld(world, mark, sapien)
+		robot.mainPos, robot.moveSpeed, robot.moving, robot.turning = robot.move(mark)
+		world = drawWorld(world, mark, robot)
 		fmt.Println(getWorld(world))
+
+		if robot.mainPos == mark {
+			fmt.Println("[*] Resetting...")
+			time.Sleep(3 * time.Second)
+
+			tick(robot, world)
+		}
 	}
+}
+
+func main() {
+	var connectEngine string = engine.Connect()
+	fmt.Println(connectEngine)
+
+	world := new([worldSize]string)
+	world = initWorld(world)
+
+	var sapien = initSapien()
+	var connectSapien string = sapien.connect()
+	fmt.Println(connectSapien)
+
+	tick(sapien, world)
 }
