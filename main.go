@@ -121,7 +121,10 @@ func (robot Robot) intel(mark int) (int, int, int, bool) {
 		if abs(horizontalMove) >= robot.haltingTime(robot.moveSpeed+robot.moveAcc) {
 			robot.moveSpeed += robot.moveAcc
 		} else if abs(horizontalMove) >= robot.haltingTime(robot.moveSpeed) {
-			robot.moveSpeed = robot.moveSpeed
+			//robot.moveSpeed = robot.moveSpeed
+			// if abs(horizontalMove) == 1 {
+			// robot.moveSpeed -= 1
+			// }
 		} else {
 			robot.moveSpeed -= robot.moveAcc
 		}
@@ -135,6 +138,8 @@ func (robot Robot) intel(mark int) (int, int, int, bool) {
 			robot.moveSpeed += robot.moveAcc
 		} else if abs(verticalMove) >= robot.haltingTime(robot.moveSpeed) {
 			// robot.moveSpeed = robot.moveSpeed
+			// if abs(verticalMove) == 1
+			// robot.moveSpeed -= 1
 		} else {
 			robot.moveSpeed -= robot.moveAcc
 		}
