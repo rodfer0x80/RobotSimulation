@@ -1,5 +1,5 @@
 -- Todo
-:: 90 degree turn stop
+:x: 90 degree turn stop
 :: signal stop
 :: refactor
 :: tests

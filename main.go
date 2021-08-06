@@ -29,8 +29,8 @@ type Robot struct {
 	maxMoveSpeed int
 	moveAcc      int // decimal 2f number x,ab acceleration 100 = 1,00
 
-	moving  bool // moving or stopping
-	turning bool // ready to turn direction
+	moving        bool // moving or stopping
+	turningWheels bool // wheels ready to turn direction (for speed control)
 
 }
 
@@ -42,17 +42,20 @@ func abs(n int) int {
 	}
 }
 
-func (robot Robot) move(mark int) (int, int, bool, bool) {
+func (robot Robot) resetWheels() {
+	robot.turningWheels = true
+}
+
+func (robot Robot) move(mark int) (int, int, bool) {
 	var horizontalMove int
 	var verticalMove int
 
-	horizontalMove, verticalMove, robot.moveSpeed, robot.turning = robot.intel(mark)
+	horizontalMove, verticalMove, robot.moveSpeed = robot.controlWheels(mark)
 
 	if robot.moveSpeed > 0 {
 		robot.moving = true
 	} else {
 		robot.moving = false
-		robot.turning = true
 	}
 
 	if robot.moving {
@@ -70,10 +73,10 @@ func (robot Robot) move(mark int) (int, int, bool, bool) {
 			}
 		}
 	} else {
-		// stopped
+		// robot stopped
 	}
 
-	return robot.mainPos, robot.moveSpeed, robot.moving, robot.turning
+	return robot.mainPos, robot.moveSpeed, robot.moving
 }
 
 func initSapien() Robot {
@@ -88,13 +91,14 @@ func initSapien() Robot {
 	sapien.moveAcc = 1
 
 	sapien.moving = false
-	sapien.turning = true
+	sapien.turningWheels = true
 
 	return sapien
 }
 
 func (robot Robot) haltingTime(n int) int {
 	var totalTime int
+
 	for i := 1; i <= n; i++ {
 		totalTime += i
 	}
@@ -107,7 +111,7 @@ func (robot Robot) connect() string {
 	return connected
 }
 
-func (robot Robot) intel(mark int) (int, int, int, bool) {
+func (robot Robot) controlWheels(mark int) (int, int, int) {
 	var markRow int = mark / worldLateral
 	var robotRow int = robot.mainPos / worldLateral
 
@@ -121,44 +125,36 @@ func (robot Robot) intel(mark int) (int, int, int, bool) {
 		if abs(horizontalMove) >= robot.haltingTime(robot.moveSpeed+robot.moveAcc) {
 			robot.moveSpeed += robot.moveAcc
 		} else if abs(horizontalMove) >= robot.haltingTime(robot.moveSpeed) {
-			//robot.moveSpeed = robot.moveSpeed
-			// if abs(horizontalMove) == 1 {
-			// robot.moveSpeed -= 1
-			// }
 		} else {
 			robot.moveSpeed -= robot.moveAcc
 		}
 	} else {
-		if robot.turning {
-			robot.turning = false
+		if robot.turningWheels {
+			robot.turningWheels = false
 			robot.moveSpeed -= robot.moveAcc
 		}
 
 		if abs(verticalMove) >= robot.haltingTime(robot.moveSpeed+robot.moveAcc) {
 			robot.moveSpeed += robot.moveAcc
 		} else if abs(verticalMove) >= robot.haltingTime(robot.moveSpeed) {
-			// robot.moveSpeed = robot.moveSpeed
-			// if abs(verticalMove) == 1
-			// robot.moveSpeed -= 1
 		} else {
 			robot.moveSpeed -= robot.moveAcc
 		}
 	}
 
-	return horizontalMove, verticalMove, robot.moveSpeed, robot.turning
+	return horizontalMove, verticalMove, robot.moveSpeed
 }
 
 func placeMark() int {
-	// place mark further from the borders so we can add robot hitbox next
 	rand.Seed(time.Now().UnixNano())
 	var randomNumber int = rand.Intn(worldSize)
 
 	return randomNumber
 }
 
-func clearScreen() int {
-	fmt.Println("\033[2J")
-	return 0
+func getCleanScreen() string {
+	var cleanScreen string = "\033[2J"
+	return cleanScreen
 }
 
 // InitWorld starts board state
@@ -186,20 +182,9 @@ func drawWorld(world *[worldSize]string, mark int, robot Robot) *[worldSize]stri
 	return world
 }
 
-func outOfWorldRight(column int, rowCells int) bool {
-	var flag bool = false
-
-	if column == rowCells-1 {
-		flag = true
-	}
-
-	return flag
-}
-
 func getWorld(world *[worldSize]string) string {
 	var worldString string = ""
 
-	// clearScreen()
 	for i := 0; i < worldSize; i += worldLateral {
 		worldString += "\n"
 
@@ -214,11 +199,15 @@ func getWorld(world *[worldSize]string) string {
 func tick(robot Robot, world *[worldSize]string) {
 	var mark int = placeMark()
 
+	robot.resetWheels()
+
 	for 1 > 0 {
 		time.Sleep(1 * time.Second)
-		clearScreen()
+		fmt.Println(getCleanScreen())
 
-		robot.mainPos, robot.moveSpeed, robot.moving, robot.turning = robot.move(mark)
+		// pool for sigint to steadly stop and exit
+		robot.mainPos, robot.moveSpeed, robot.moving = robot.move(mark)
+
 		world = drawWorld(world, mark, robot)
 		fmt.Println(getWorld(world))
 
@@ -232,11 +221,11 @@ func tick(robot Robot, world *[worldSize]string) {
 }
 
 func main() {
-	var connectEngine string = engine.Connect()
-	fmt.Println(connectEngine)
-
 	world := new([worldSize]string)
 	world = initWorld(world)
+
+	var connectEngine string = engine.Connect()
+	fmt.Println(connectEngine)
 
 	var sapien = initSapien()
 	var connectSapien string = sapien.connect()
