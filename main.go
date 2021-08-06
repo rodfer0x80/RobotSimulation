@@ -29,9 +29,8 @@ type Robot struct {
 	maxMoveSpeed int
 	moveAcc      int // decimal 2f number x,ab acceleration 100 = 1,00
 
-	moving        bool // moving or stopping
-	turningWheels bool // wheels ready to turn direction (for speed control)
-
+	moving  bool // moving or stopping
+	turning bool
 }
 
 func abs(n int) int {
@@ -42,15 +41,11 @@ func abs(n int) int {
 	}
 }
 
-func (robot Robot) resetWheels() {
-	robot.turningWheels = true
-}
-
-func (robot Robot) move(mark int) (int, int, bool) {
+func (robot Robot) move(mark int) (int, int, bool, bool) {
 	var horizontalMove int
 	var verticalMove int
 
-	horizontalMove, verticalMove, robot.moveSpeed = robot.controlWheels(mark)
+	horizontalMove, verticalMove, robot.moveSpeed, robot.turning = robot.controlWheels(mark)
 
 	if robot.moveSpeed > 0 {
 		robot.moving = true
@@ -76,9 +71,12 @@ func (robot Robot) move(mark int) (int, int, bool) {
 		// robot stopped
 	}
 
-	return robot.mainPos, robot.moveSpeed, robot.moving
+	return robot.mainPos, robot.moveSpeed, robot.moving, robot.turning
 }
 
+func (robot Robot) resetTurningWheels() bool {
+	return true
+}
 func initSapien() Robot {
 	var sapien = Robot{}
 
@@ -91,7 +89,7 @@ func initSapien() Robot {
 	sapien.moveAcc = 1
 
 	sapien.moving = false
-	sapien.turningWheels = true
+	sapien.turning = true
 
 	return sapien
 }
@@ -111,7 +109,7 @@ func (robot Robot) connect() string {
 	return connected
 }
 
-func (robot Robot) controlWheels(mark int) (int, int, int) {
+func (robot Robot) controlWheels(mark int) (int, int, int, bool) {
 	var markRow int = mark / worldLateral
 	var robotRow int = robot.mainPos / worldLateral
 
@@ -129,20 +127,19 @@ func (robot Robot) controlWheels(mark int) (int, int, int) {
 			robot.moveSpeed -= robot.moveAcc
 		}
 	} else {
-		if robot.turningWheels {
-			robot.turningWheels = false
-			robot.moveSpeed -= robot.moveAcc
-		}
-
 		if abs(verticalMove) >= robot.haltingTime(robot.moveSpeed+robot.moveAcc) {
-			robot.moveSpeed += robot.moveAcc
+			if !(robot.turning) {
+				robot.moveSpeed += robot.moveAcc
+			} else {
+				robot.turning = false
+			}
 		} else if abs(verticalMove) >= robot.haltingTime(robot.moveSpeed) {
 		} else {
 			robot.moveSpeed -= robot.moveAcc
 		}
 	}
 
-	return horizontalMove, verticalMove, robot.moveSpeed
+	return horizontalMove, verticalMove, robot.moveSpeed, robot.turning
 }
 
 func placeMark() int {
@@ -198,15 +195,13 @@ func getWorld(world *[worldSize]string) string {
 
 func tick(robot Robot, world *[worldSize]string) {
 	var mark int = placeMark()
-
-	robot.resetWheels()
+	robot.turning = robot.resetTurningWheels()
 
 	for 1 > 0 {
 		time.Sleep(1 * time.Second)
 		fmt.Println(getCleanScreen())
 
-		// pool for sigint to steadly stop and exit
-		robot.mainPos, robot.moveSpeed, robot.moving = robot.move(mark)
+		robot.mainPos, robot.moveSpeed, robot.moving, robot.turning = robot.move(mark)
 
 		world = drawWorld(world, mark, robot)
 		fmt.Println(getWorld(world))
