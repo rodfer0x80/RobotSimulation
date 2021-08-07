@@ -1,5 +1,0 @@
--- Todo
-:x: 90 degree turn stop
-:: signal stop (ESTOP) gracefully stopping robot and quitting
-:: refactor and split into modules (not packages)
-:: tests for all of this beatiful mess
