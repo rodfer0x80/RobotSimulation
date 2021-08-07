@@ -5,11 +5,6 @@ import (
 	"time"
 )
 
-func connectEngine() string {
-	var connected string = "[*] Engine connected"
-	return connected
-}
-
 func getCleanScreen() string {
 	var cleanScreen string = "\033[2J"
 	return cleanScreen
