@@ -75,7 +75,9 @@ func (robot Robot) controlWheels(mark int) (int, int, int, bool) {
 
 	if abs(horizontalMove) > 0 {
 		if abs(horizontalMove) >= robot.haltingTime(robot.moveSpeed+robot.moveAcc) {
-			robot.moveSpeed += robot.moveAcc
+			if robot.moveSpeed <= robot.maxMoveSpeed {
+				robot.moveSpeed += robot.moveAcc
+			}
 		} else if abs(horizontalMove) >= robot.haltingTime(robot.moveSpeed) {
 		} else {
 			robot.moveSpeed -= robot.moveAcc
@@ -87,7 +89,9 @@ func (robot Robot) controlWheels(mark int) (int, int, int, bool) {
 		}
 
 		if abs(verticalMove) >= robot.haltingTime(robot.moveSpeed+robot.moveAcc) {
-			robot.moveSpeed += robot.moveAcc
+			if robot.moveSpeed <= robot.maxMoveSpeed {
+				robot.moveSpeed += robot.moveAcc
+			}
 		} else if abs(verticalMove) >= robot.haltingTime(robot.moveSpeed) {
 		} else {
 			robot.moveSpeed -= robot.moveAcc
