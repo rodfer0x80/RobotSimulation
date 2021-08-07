@@ -1,4 +1,4 @@
-# motorRobot-engine
+# motorRobot
 2D engine and motor robot simulation in Golang
 
 ### Design
