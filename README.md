@@ -8,4 +8,4 @@
 Robot simulator with wheels that moves [up, down], slowly turning [right, left] (possible while moving), with direction switching with [start/stop] on [spacebar] with negative acceleration to stop, acceleration, speed [0-x] and distance sensoring for acceleration management
 
 ### Configuration
-##### Edit "configs.go" to configure your own robot, world size and graphics
+> Edit "configs.go" to configure your own robot, world size and graphics
