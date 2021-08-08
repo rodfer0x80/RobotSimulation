@@ -1,5 +1,5 @@
 # motorRobot
-2D engine and motor robot simulation in Golang
+2D engine robot simulator
 
 ### Design
 ##### Engine
