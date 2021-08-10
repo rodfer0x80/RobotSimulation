@@ -9,3 +9,6 @@
 
 #### Configuration
 > Edit "configs.go" to configure your own robot, world size and graphics
+
+#### Expanding
+- https://verilog.com/v-books.html 
