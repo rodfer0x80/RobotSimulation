@@ -11,4 +11,4 @@
 > Edit "configs.go" to configure your own robot, world size and graphics
 
 #### Next
-- Build this in C and improve clock
+- Build this in Rust and improve clock
