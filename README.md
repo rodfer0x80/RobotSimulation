@@ -12,3 +12,6 @@
 
 #### Next
 - Build this in Rust and improve clock
+- Rust has a number of standard library features that rely on the heap, like boxes. However, Rust has compiler directives to completely disable any heap-using language features, and statically verify that none of these features are being used. It is entirely practical to write a Rust program with no heap usage.
+
+
