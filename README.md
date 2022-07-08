@@ -16,4 +16,4 @@
 > go run .
 
 <img src="imgs/run.jpg" width="400" height="300"></img>
-<img src="imgs/run.jpg" width="400" height="300"></img>
+<img src="imgs/mark.jpg" width="400" height="300"></img>
